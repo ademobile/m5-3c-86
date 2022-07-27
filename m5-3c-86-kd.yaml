@@ -1,0 +1,321 @@
+substitutions:
+  node_name: m5-3c-86-kd
+  device_name: M5-3C-86
+  single_click: 'return "single";'
+  double_click: 'return "double";'
+  triple_click: 'return "triple";'
+  held_down: 'return "held";'
+  released: 'return "released";'
+
+globals:
+  - id: center_held
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: left_held
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: right_held
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+    
+esphome:
+  name: $node_name
+  comment: $device_name
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: ${node_name}_HotSpot
+    password: !secret hotspot_password
+
+captive_portal:
+
+switch:
+  - platform: gpio
+    id: left_relay
+    name: ${node_name} relay left
+    pin:
+      number: 23
+  - platform: gpio
+    id: center_relay
+    name: ${node_name} relay center
+    pin:
+      number: 19
+  - platform: gpio
+    id: right_relay
+    name: ${node_name} relay right
+    pin:
+      number: 22
+
+button:
+  - platform: restart
+    name: ${node_name} restart
+    
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 4
+      mode: INPUT_PULLUP
+    id: state_left
+    internal: true
+    filters:
+      - invert:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_multi_click:
+      - timing:
+          - ON for 25ms to 200ms
+          - OFF for at least 250ms
+        then:
+          - text_sensor.template.publish:
+              id: button_left
+              state: !lambda ${single_click}
+      - timing:
+          - ON for 25ms to 200ms
+          - OFF for 25ms to 180ms
+          - ON for 25ms to 200ms
+        then:
+          - text_sensor.template.publish:
+              id: button_left
+              state: !lambda ${double_click}
+      - timing:
+          - ON for 40ms to 400ms
+          - OFF for 40ms to 300ms
+          - ON for 40ms to 400ms
+          - OFF for 40ms to 300ms
+          - ON for 40ms to 400ms
+          - OFF for at least 330ms
+        then:
+          - text_sensor.template.publish:
+              id: button_left
+              state: !lambda ${triple_click}
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - globals.set:
+              id: left_held
+              value: 'true'
+          - text_sensor.template.publish:
+              id: button_left
+              state: !lambda ${held_down}
+      - timing:
+          - ON for at least 1100ms
+          - OFF for at least 330ms
+        then:
+          - globals.set:
+              id: left_held
+              value: 'false'
+          - text_sensor.template.publish:
+              id: button_left
+              state: !lambda ${released}
+  - platform: gpio
+    pin:
+      number: 0
+      mode: INPUT_PULLUP
+    id: state_center
+    internal: true
+    filters:
+      - invert:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_multi_click:
+      - timing:
+          - ON for 25ms to 200ms
+          - OFF for at least 250ms
+        then:
+          - text_sensor.template.publish:
+              id: button_center
+              state: !lambda ${single_click}
+      - timing:
+          - ON for 25ms to 200ms
+          - OFF for 25ms to 180ms
+          - ON for 25ms to 200ms
+        then:
+          - text_sensor.template.publish:
+              id: button_center
+              state: !lambda ${double_click}
+      - timing:
+          - ON for 40ms to 400ms
+          - OFF for 40ms to 300ms
+          - ON for 40ms to 400ms
+          - OFF for 40ms to 300ms
+          - ON for 40ms to 400ms
+          - OFF for at least 330ms
+        then:
+          - text_sensor.template.publish:
+              id: button_center
+              state: !lambda ${triple_click}
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - globals.set:
+              id: center_held
+              value: 'true'
+          - text_sensor.template.publish:
+              id: button_center
+              state: !lambda ${held_down}
+      - timing:
+          - ON for at least 1100ms
+          - OFF for at least 330ms
+        then:
+          - globals.set:
+              id: center_held
+              value: 'false'
+          - text_sensor.template.publish:
+              id: button_center
+              state: !lambda ${released}
+  - platform: gpio
+    pin:
+      number: 15
+      mode: INPUT_PULLUP
+    id: state_right
+    internal: true
+    filters:
+      - invert:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_multi_click:
+      - timing:
+          - ON for 25ms to 200ms
+          - OFF for at least 250ms
+        then:
+          - text_sensor.template.publish:
+              id: button_right
+              state: !lambda ${single_click}
+      - timing:
+          - ON for 25ms to 200ms
+          - OFF for 25ms to 180ms
+          - ON for 25ms to 200ms
+          - OFF for at least 250ms
+        then:
+          - text_sensor.template.publish:
+              id: button_right
+              state: !lambda ${double_click}
+      - timing:
+          - ON for 40ms to 400ms
+          - OFF for 40ms to 300ms
+          - ON for 40ms to 400ms
+          - OFF for 40ms to 300ms
+          - ON for 40ms to 400ms
+          - OFF for at least 50ms
+        then:
+          - text_sensor.template.publish:
+              id: button_right
+              state: !lambda ${triple_click}
+      - timing:
+          - ON for at least 1000ms
+        then:
+          - text_sensor.template.publish:
+              id: button_right
+              state: !lambda ${held_down}
+      - timing:
+          - ON for at least 1100ms
+          - OFF for at least 330ms
+        then:
+          - globals.set:
+              id: left_held
+              value: 'false'
+          - text_sensor.template.publish:
+              id: button_right
+              state: !lambda ${released}
+
+text_sensor:
+  - platform: template
+    name: ${node_name} button left
+    id: button_left
+    icon: "mdi:toggle-switch"
+    on_value:
+      then:
+        - if:
+            condition:
+              or:
+              - lambda: return id(left_held);
+              - text_sensor.state:
+                  id: button_left
+                  state: ""
+            else:
+              - delay: 80ms
+              - text_sensor.template.publish:
+                  id: button_left
+                  state: !lambda 'return "";'
+  - platform: template
+    name: ${node_name} button center
+    id: button_center
+    icon: "mdi:toggle-switch"
+    on_value:
+      then:
+        - if:
+            condition:
+              or:
+              - lambda: return id(center_held);
+              - text_sensor.state:
+                  id: button_center
+                  state: ""
+            else:
+              - delay: 80ms
+              - text_sensor.template.publish:
+                  id: button_center
+                  state: !lambda 'return "";'
+  - platform: template
+    name: ${node_name} button right
+    id: button_right
+    icon: "mdi:toggle-switch"
+    on_value:
+      then:
+        - if:
+            condition:
+              or:
+              - lambda: return id(right_held);
+              - text_sensor.state:
+                  id: button_right
+                  state: ""
+            else:
+              - delay: 80ms
+              - text_sensor.template.publish:
+                  id: button_right
+                  state: !lambda 'return "";'
+
+output:
+  - platform: ledc
+    pin: 18
+    frequency: 1000 Hz
+    id: pwm_output
+    
+light:
+  - platform: monochromatic
+    output: pwm_output
+    name: ${node_name} night light
+  - platform: status_led
+    name: ${node_name} info led
+    pin:
+      number: 5
+      inverted: true
+  - platform: status_led
+    id: led_right
+    pin:
+      number: 22
+      
+sensor:
+  - platform: wifi_signal
+    name: ${node_name} WiFi Signal
+    update_interval: 60s
